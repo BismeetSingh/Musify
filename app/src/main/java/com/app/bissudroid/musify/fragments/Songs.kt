@@ -58,8 +58,8 @@ class Songs : Fragment() {
         val permissionCheck = ContextCompat.checkSelfPermission(activity!!, Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val readCheck=ContextCompat.checkSelfPermission(activity!!,Manifest.permission.READ_EXTERNAL_STORAGE)
         if (permissionCheck != PackageManager.PERMISSION_GRANTED && readCheck!=PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                activity!!,
+            requestPermissions(
+
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE),
                 Constants.MY_PERMISSIONS_REQUEST_READ_MEDIA
             )
@@ -70,6 +70,9 @@ class Songs : Fragment() {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Timber.d("called");
+
         if (requestCode == Constants.MY_PERMISSIONS_REQUEST_READ_MEDIA) {
             if (permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 && permissions[1].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
