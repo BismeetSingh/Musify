@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/constraintLayout"
-
+android:orientation="vertical"
                 android:layout_width="match_parent"
+              android:weightSum="1"
                 android:layout_height="match_parent">
 
 
     <com.app.bissudroid.musify.utils.RecylerViewEmptySupport
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:layout_above="@id/currentSong"
-
-
+            android:layout_height="match_parent"
+            android:clipToPadding="true"
+            android:layout_weight="0.9"
             android:id="@+id/musicList">
     </com.app.bissudroid.musify.utils.RecylerViewEmptySupport>
+<RelativeLayout android:layout_width="match_parent"
+                android:layout_weight="0.1"
 
+                android:gravity="bottom"
+                android:layout_height="wrap_content">
     <include layout="@layout/bottom_now_playing_view"
              android:id="@+id/currentSong"
-             android:layout_alignParentBottom="true"
 
              android:layout_height="wrap_content"
              android:layout_width="match_parent" android:layout_marginBottom="0dp"/>
-
-
 </RelativeLayout>
+
+
+
+</LinearLayout>

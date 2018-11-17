@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--<layout -->
-    <!--<data>-->
-        <!--<variable name="songs" type="com.app.bissudroid.musify.models.Songs"/>-->
-    <!--</data>-->
+<!--<data>-->
+<!--<variable name="songs" type="com.app.bissudroid.musify.models.Songs"/>-->
+<!--</data>-->
+<layout>
+
+
     <android.support.design.card.MaterialCardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:id="@+id/root"
-            xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
             android:background="@color/white"
             android:layout_height="wrap_content"
             android:layout_width="match_parent">
@@ -82,9 +86,9 @@
                                                   android:layout_height="wrap_content"/>
 
 
-
         </android.support.constraint.ConstraintLayout>
     </android.support.design.card.MaterialCardView>
 
 
-<!--</layout>-->
+    <!--</layout>-->
+</layout>

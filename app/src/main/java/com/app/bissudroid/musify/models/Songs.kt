@@ -9,5 +9,6 @@ package com.app.bissudroid.musify.models
       var songAlbum: String,
       var songPath: String,
       var albumid: Long
+
   ) {
 }

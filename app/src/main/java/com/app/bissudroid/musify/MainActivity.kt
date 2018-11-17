@@ -48,14 +48,14 @@ class MainActivity : AppCompatActivity() {
 
         override fun getItem(position: Int): Fragment {
             when(position){
-                0 -> return Songs()
+                0 -> return SongsFragment()
                 1 -> return Albums()
                 2 -> return ArtistsFragment()
                 3 -> return Folders()
                 4 -> return  PlaylistFragment()
                 5 -> return GenresFragment()
                 else ->
-                    return Songs()
+                    return SongsFragment()
 
             }
 
