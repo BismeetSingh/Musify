@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.widget.Toast
 import com.app.bissudroid.musify.R
+import com.app.bissudroid.musify.R.id.songName
 import com.app.bissudroid.musify.databinding.MusicItemsBinding
 import com.app.bissudroid.musify.interfaces.onSongClickListener
 import com.app.bissudroid.musify.models.Songs
@@ -20,12 +21,25 @@ class SongHolder(
 ) : RecyclerView.ViewHolder(musicItemsBinding.root) {
     var musicItemsBindingType=musicItemsBinding
     var onSongClick=onSongClickListener
+    var musicItemsBindingPrevious:View?=null
+
+    private var song:Songs?=null
+
+
 
     fun bind(musicitem: Songs,context:Context,uri:Uri) {
         musicItemsBindingType.songs=musicitem
         musicItemsBindingType.root.setOnClickListener {
+            if(song!=null){
+
+                musicItemsBindingPrevious?.visibility=View.GONE
+
+            }
             musicItemsBindingType.equalizerView.visibility=View.VISIBLE
             musicItemsBindingType.equalizerView.animateBars()
+
+            song=musicItemsBindingType.songs
+            musicItemsBindingPrevious=musicItemsBindingType.equalizerView
             onSongClick.onSongClick(adapterPosition,musicitem)
         }
         Glide.with(context).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon)).into(musicItemsBindingType.songThumbnail)
