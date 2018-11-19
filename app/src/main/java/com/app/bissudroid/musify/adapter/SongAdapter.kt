@@ -53,20 +53,20 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
     }
 
     private fun toggleBars(position: Int, holder: SongHolder) {
+
         Timber.d("%s",songItems!![position].isPlaying)
         if (mSelectedItemPosition == position) {
-
+            holder.musicItemsBindingType.equalizerView.visibility = View.VISIBLE
+            holder.musicItemsBindingType.equalizerView.animateBars()
 
 
             if (!songItems!![position].isPlaying) {
 
-                holder.musicItemsBindingType.equalizerView.visibility = View.VISIBLE
-                holder.musicItemsBindingType.equalizerView.animateBars()
-
+                SharedPreferenceUtils.savePlayingState(context,true)
 
             } else {
-                holder.musicItemsBindingType.equalizerView.visibility = View.GONE
-                holder.musicItemsBindingType.equalizerView.stopBars()
+
+                SharedPreferenceUtils.savePlayingState(context,false)
 
             }
             songItems!![position].isPlaying = !songItems!![position].isPlaying
@@ -74,7 +74,8 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
             holder.musicItemsBindingType.equalizerView.visibility = View.GONE
             holder.musicItemsBindingType.equalizerView.stopBars()
             songItems!![position].isPlaying = false
-           
+            SharedPreferenceUtils.savePlayingState(context,true)
+
         }
     }
 

@@ -76,6 +76,7 @@
             <ImageButton android:layout_width="wrap_content"
                          android:src="@android:drawable/ic_media_play"
                          android:background="@color/white"
+                         android:id="@+id/controlCurrentSong"
                          android:tint="@color/colorPrimary"
                          app:layout_constraintStart_toEndOf="@id/playguide"
                          app:layout_constraintTop_toTopOf="@id/songView"

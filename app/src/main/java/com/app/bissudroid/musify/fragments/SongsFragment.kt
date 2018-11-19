@@ -28,39 +28,24 @@ import kotlinx.android.synthetic.main.music_items.*
 import timber.log.Timber
 
 
-class SongsFragment : Fragment(),onSongClickListener,MediaPlayer.OnPreparedListener{
-    override fun onPrepared(mp: MediaPlayer?) {
-        mp?.start()
+class SongsFragment : Fragment(),onSongClickListener{
 
-    }
 //TODO move this to service
     override fun onSongClick(pos: Int, songItem: Songs) {
-    if (!mediaPlayer.isPlaying){
-        songName=songItem.songPath
-        mediaPlayer.setDataSource(songItem.songPath)
-        mediaPlayer.setOnPreparedListener(this)
-        mediaPlayer.prepareAsync()
+
         val intent = Intent(activity, MusicForegroundService::class.java)
-        intent.setAction("ACTION_START_FOREGROUND_SERVICE")
+            .putExtra(Constants.SONGPATH,songItem.songPath)
+        intent.setAction(Constants.ACTION_PLAY)
         activity!!.startService(intent)
+
+    if(songItem.songName.indexOf(".")!=-1) {
+        currentSong.songName.text = songItem.songName.substring(0, songItem.songName.lastIndexOf("."))
     }
-       else if (!songName.equals(songItem.songPath,true) && mediaPlayer.isPlaying) {
-
-
-            mediaPlayer.stop()
-            mediaPlayer.reset()
-
-
-            songName = songItem.songPath
-            mediaPlayer.setDataSource(songItem.songPath)
-
-            mediaPlayer.setOnPreparedListener(this)
-            mediaPlayer.prepareAsync()
-
-
-        }
-    currentSong.songName.text = songItem.songName
+    else
+    currentSong.songName.text=songItem.songName
     currentSong.songArtist.text = songItem.songArtist
+    currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
+
     val uri = ContentUris.withAppendedId(
         Constants.URI,
         songItem.albumid
@@ -73,7 +58,7 @@ class SongsFragment : Fragment(),onSongClickListener,MediaPlayer.OnPreparedListe
 
     private lateinit   var songAdapter:SongAdapter
     private lateinit var mediaPlayer: MediaPlayer
-    private var songName:String=""
+
 
 
 
@@ -94,7 +79,14 @@ class SongsFragment : Fragment(),onSongClickListener,MediaPlayer.OnPreparedListe
         musicList.setEmptyView(view)
         currentSong.songName.isSelected=true
         songAdapter=SongAdapter(context!!,this)
-        mediaPlayer=MediaPlayer()
+        val intent = Intent(activity, MusicForegroundService::class.java)
+            .putExtra(Constants.SONGPATH,"")
+
+
+
+        intent.setAction(Constants.ACTION_START_FOREGROUND_SERVICE)
+        activity!!.startService(intent)
+
 //        musicList.addItemDecoration(DividerItemDecoration(activity,DividerItemDecoration.VERTICAL))
 
 

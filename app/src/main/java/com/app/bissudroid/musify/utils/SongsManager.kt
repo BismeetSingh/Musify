@@ -38,7 +38,7 @@ object SongsManager {
                 val album = c.getString(2)
                 val artist = c.getString(3)
                 val albumid=c.getLong(4)
-                val audioModel = Songs(name, artist, false, duration, album, path,albumid)
+                val audioModel = Songs(name.  substring(0,name.lastIndexOf(".")), artist, false, duration, album, path,albumid)
                 tempAudioList.add(audioModel)
             }
             c.close()

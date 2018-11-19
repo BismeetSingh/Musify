@@ -20,6 +20,15 @@ object SharedPreferenceUtils {
         editor.putString(Constants.CURRENT_SONG_NAME, newValue)
         editor.apply()
     }
+    fun isPlaying(context: Context):Boolean{
+        return getSharedPreferences(context).getBoolean(Constants.ISPLAYING,false)
+
+    }
+    fun savePlayingState(context: Context,isPlaying:Boolean){
+        val editor = getSharedPreferences(context).edit()
+        editor.putBoolean(Constants.ISPLAYING, isPlaying)
+        editor.apply()
+    }
 
 
 }
