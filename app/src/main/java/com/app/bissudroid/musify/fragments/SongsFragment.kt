@@ -2,6 +2,7 @@ package com.app.bissudroid.musify.fragments
 
 import android.Manifest
 import android.content.ContentUris
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Build
@@ -16,6 +17,7 @@ import com.app.bissudroid.musify.R
 import com.app.bissudroid.musify.adapter.SongAdapter
 import com.app.bissudroid.musify.interfaces.onSongClickListener
 import com.app.bissudroid.musify.models.Songs
+import com.app.bissudroid.musify.service.MusicForegroundService
 import com.app.bissudroid.musify.utils.Constants
 import com.app.bissudroid.musify.utils.SongsManager
 import com.bumptech.glide.Glide
@@ -24,9 +26,6 @@ import kotlinx.android.synthetic.main.bottom_now_playing_view.view.*
 import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.music_items.*
 import timber.log.Timber
-import android.support.v4.view.accessibility.AccessibilityEventCompat.setAction
-import android.content.Intent
-import com.app.bissudroid.musify.service.MusicForegroundService
 
 
 class SongsFragment : Fragment(),onSongClickListener,MediaPlayer.OnPreparedListener{
@@ -93,6 +92,7 @@ class SongsFragment : Fragment(),onSongClickListener,MediaPlayer.OnPreparedListe
         musicList.layoutManager=LinearLayoutManager(activity,LinearLayoutManager.VERTICAL,false)
         val view=LayoutInflater.from(context).inflate(R.layout.empty_view,root,false);
         musicList.setEmptyView(view)
+        currentSong.songName.isSelected=true
         songAdapter=SongAdapter(context!!,this)
         mediaPlayer=MediaPlayer()
 //        musicList.addItemDecoration(DividerItemDecoration(activity,DividerItemDecoration.VERTICAL))

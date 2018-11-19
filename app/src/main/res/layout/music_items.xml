@@ -9,10 +9,13 @@
             android:id="@+id/root"
             android:background="@color/white"
             android:layout_height="wrap_content"
+            android:foregroundGravity="center"
             android:layout_width="match_parent">
         <android.support.constraint.ConstraintLayout
                 android:layout_width="match_parent"
-                android:padding="2dp"
+                android:layout_gravity="center"
+
+                android:padding="5dp"
                 android:id="@+id/songView"
                 android:layout_height="wrap_content">
 
