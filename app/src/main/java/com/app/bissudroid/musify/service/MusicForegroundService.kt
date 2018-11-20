@@ -27,7 +27,6 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
 
    override fun onCreate() {
         super.onCreate()
-       Timber.d("onCreate Called")
        mediaPlayer=MediaPlayer()
 
 
@@ -50,7 +49,14 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
                     playSong()
 //                    Toast.makeText(getApplicationContext(), "You click Play button.", Toast.LENGTH_LONG).show()
                 }
-                Constants.ACTION_PAUSE -> Toast.makeText(applicationContext, "You click Pause button.", Toast.LENGTH_LONG).show()
+                Constants.ACTION_PAUSE -> {
+                    pauseSong()
+
+                }
+               Constants.ACTION_RESUME ->{
+                   resumeSong()
+
+               }
 
         }
         return super.onStartCommand(intent, flags, startId)
@@ -65,7 +71,8 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
     }
 
     private fun playSong() {
-
+        Timber.d(songName)
+//TODO fix crash here on data source
         if (!mediaPlayer.isPlaying) {
 
             mediaPlayer.setDataSource(songName)
@@ -86,6 +93,14 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
 
 
         }
+    }
+    private fun pauseSong(){
+        mediaPlayer.pause()
+    }
+    private fun resumeSong(){
+        if(!songName.isEmpty())
+        mediaPlayer.start()
+
     }
 
     private fun stopForegroundService() {

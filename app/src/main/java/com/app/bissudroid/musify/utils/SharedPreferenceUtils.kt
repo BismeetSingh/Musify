@@ -20,6 +20,24 @@ object SharedPreferenceUtils {
         editor.putString(Constants.CURRENT_SONG_NAME, newValue)
         editor.apply()
     }
+    fun getCurrentSongPath(context: Context): String? {
+        return getSharedPreferences(context).getString(Constants.SONGPATH, "")
+    }
+
+    fun setCurrentArtist(context: Context, newValue: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(Constants.SONGARTIST, newValue)
+        editor.apply()
+    }
+    fun getCurrentSongArtist(context: Context): String? {
+        return getSharedPreferences(context).getString(Constants.SONGARTIST, "")
+    }
+
+    fun setCurrentSongPath(context: Context, newValue: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(Constants.SONGPATH, newValue)
+        editor.apply()
+    }
     fun isPlaying(context: Context):Boolean{
         return getSharedPreferences(context).getBoolean(Constants.ISPLAYING,false)
 

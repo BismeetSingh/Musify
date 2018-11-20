@@ -10,6 +10,8 @@ class Constants {
         val CURRENT_SONG_NAME:String="currentSongName"
         val ACTION_START_FOREGROUND_SERVICE:String="ACTION_START_FOREGROUND_SERVICE"
         val SONGPATH:String="songpath"
+        val SONGARTIST:String="songArtist"
+        val ACTION_RESUME="resume"
         val ISPLAYING:String="isplaying"
         val ACTION_PAUSE = "ACTION_PAUSE"
         val ACTION_PLAY = "ACTION_PLAY"

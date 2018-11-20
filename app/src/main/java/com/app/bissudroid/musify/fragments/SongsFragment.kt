@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat.requestPermissions
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
@@ -14,11 +16,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.app.bissudroid.musify.R
+import com.app.bissudroid.musify.R.id.*
 import com.app.bissudroid.musify.adapter.SongAdapter
 import com.app.bissudroid.musify.interfaces.onSongClickListener
 import com.app.bissudroid.musify.models.Songs
 import com.app.bissudroid.musify.service.MusicForegroundService
 import com.app.bissudroid.musify.utils.Constants
+import com.app.bissudroid.musify.utils.SharedPreferenceUtils
 import com.app.bissudroid.musify.utils.SongsManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -28,9 +32,44 @@ import kotlinx.android.synthetic.main.music_items.*
 import timber.log.Timber
 
 
-class SongsFragment : Fragment(),onSongClickListener{
+class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
+    override fun onClick(v: View?) {
 
-//TODO move this to service
+        when(v?.id){
+            R.id.controlCurrentSong ->{
+                val intent = Intent(activity, MusicForegroundService::class.java)
+                    .putExtra(Constants.SONGPATH,SharedPreferenceUtils.getCurrentSongPath(context!!))
+                if(SharedPreferenceUtils.isPlaying(context!!)){
+                    currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.play_music))
+                    intent.setAction(Constants.ACTION_PAUSE)
+                    SharedPreferenceUtils.savePlayingState(context!!,false)
+                }
+                else{
+                    currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
+                    intent.setAction(Constants.ACTION_RESUME)
+                    SharedPreferenceUtils.savePlayingState(context!!,true)
+                }
+
+                val name=SharedPreferenceUtils.getCurrentSong(context!!)
+
+
+
+                activity!!.startService(intent)
+
+                if(SharedPreferenceUtils.getCurrentSong(context!!)?.indexOf(".")!=-1) {
+                    currentSong.songName.text = name?.substring(0, name.lastIndexOf("."))
+                }
+                else
+                    currentSong.songName.text=name
+                currentSong.songArtist.text = SharedPreferenceUtils.getCurrentSongArtist(context!!)
+
+
+
+            }
+            }
+        }
+
+
     override fun onSongClick(pos: Int, songItem: Songs) {
 
         val intent = Intent(activity, MusicForegroundService::class.java)
@@ -57,18 +96,17 @@ class SongsFragment : Fragment(),onSongClickListener{
     }
 
     private lateinit   var songAdapter:SongAdapter
-    private lateinit var mediaPlayer: MediaPlayer
-
-
-
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_main, container, false)
         return rootView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        currentSong.controlCurrentSong.setOnClickListener(this@SongsFragment)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
