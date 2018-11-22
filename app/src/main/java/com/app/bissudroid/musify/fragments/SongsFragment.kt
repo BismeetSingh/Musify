@@ -37,33 +37,16 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 
         when(v?.id){
             R.id.controlCurrentSong ->{
-                val intent = Intent(activity, MusicForegroundService::class.java)
-                    .putExtra(Constants.SONGPATH,SharedPreferenceUtils.getCurrentSongPath(context!!))
                 if(SharedPreferenceUtils.isPlaying(context!!)){
+                    Timber.d("Now pause")
                     currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.play_music))
-                    intent.setAction(Constants.ACTION_PAUSE)
                     SharedPreferenceUtils.savePlayingState(context!!,false)
                 }
                 else{
+                    Timber.d("Play Time")
                     currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
-                    intent.setAction(Constants.ACTION_RESUME)
                     SharedPreferenceUtils.savePlayingState(context!!,true)
                 }
-
-                val name=SharedPreferenceUtils.getCurrentSong(context!!)
-
-
-
-                activity!!.startService(intent)
-
-                if(SharedPreferenceUtils.getCurrentSong(context!!)?.indexOf(".")!=-1) {
-                    currentSong.songName.text = name?.substring(0, name.lastIndexOf("."))
-                }
-                else
-                    currentSong.songName.text=name
-                currentSong.songArtist.text = SharedPreferenceUtils.getCurrentSongArtist(context!!)
-
-
 
             }
             }
@@ -84,6 +67,7 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
     currentSong.songName.text=songItem.songName
     currentSong.songArtist.text = songItem.songArtist
     currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
+
 
     val uri = ContentUris.withAppendedId(
         Constants.URI,
@@ -119,16 +103,8 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         songAdapter=SongAdapter(context!!,this)
         val intent = Intent(activity, MusicForegroundService::class.java)
             .putExtra(Constants.SONGPATH,"")
-
-
-
         intent.setAction(Constants.ACTION_START_FOREGROUND_SERVICE)
         activity!!.startService(intent)
-
-//        musicList.addItemDecoration(DividerItemDecoration(activity,DividerItemDecoration.VERTICAL))
-
-
-
         if(Build.VERSION.SDK_INT<23){
             songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
         }
@@ -136,9 +112,14 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
             getPermissions()
         }
         musicList.adapter=songAdapter
+        currentSong.songName.text=SharedPreferenceUtils.getCurrentSong(context!!)
 
-
-
+        currentSong.songArtist.text=SharedPreferenceUtils.getCurrentSongArtist(context!!)
+        val uri = ContentUris.withAppendedId(
+            Constants.URI,
+            SharedPreferenceUtils.getCurrentAlbumId(context!!)!!)
+                    Glide.with(context!!).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
+                .into(currentSong.songThumbnail)
 
     }
 
@@ -148,7 +129,6 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         val readCheck=ContextCompat.checkSelfPermission(activity!!,Manifest.permission.READ_EXTERNAL_STORAGE)
         if (permissionCheck != PackageManager.PERMISSION_GRANTED && readCheck!=PackageManager.PERMISSION_GRANTED) {
             requestPermissions(
-
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE),
                 Constants.MY_PERMISSIONS_REQUEST_READ_MEDIA
             )
@@ -160,13 +140,14 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        Timber.d("called");
+
 
         if (requestCode == Constants.MY_PERMISSIONS_REQUEST_READ_MEDIA) {
             if (permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 && permissions[1].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1]==PackageManager.PERMISSION_GRANTED) {
                 songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
+
 
 
             }

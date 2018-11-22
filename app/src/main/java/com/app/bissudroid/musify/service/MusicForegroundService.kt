@@ -1,7 +1,9 @@
 package com.app.bissudroid.musify.service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.MediaPlayer
 import android.os.IBinder
 import android.widget.Toast
@@ -10,7 +12,18 @@ import com.app.bissudroid.musify.utils.NotificationUtils
 import com.app.bissudroid.musify.utils.SharedPreferenceUtils
 import timber.log.Timber
 
-class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
+class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener,SharedPreferences.OnSharedPreferenceChangeListener{
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        Timber.d("Called Preferences")
+       if(sharedPreferences!!.getBoolean(Constants.ISPLAYING,false)){
+           resumeSong()
+       }
+        else{
+           pauseSong()
+       }
+
+    }
+
     override fun onPrepared(mp: MediaPlayer?) {
         mp?.start()
     }
@@ -32,6 +45,8 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
 
     }
    override fun onStartCommand(intent:Intent, flags:Int, startId:Int):Int {
+       getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE).registerOnSharedPreferenceChangeListener(this)
+
 
 
             val action = intent.getAction()
@@ -71,7 +86,8 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
     }
 
     private fun playSong() {
-        Timber.d(songName)
+
+        mediaPlayer.reset()
 //TODO fix crash here on data source
         if (!mediaPlayer.isPlaying) {
 
@@ -95,10 +111,13 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
         }
     }
     private fun pauseSong(){
+        Timber.d("Paused")
         mediaPlayer.pause()
+
     }
     private fun resumeSong(){
-        if(!songName.isEmpty())
+        Timber.d("Resumed")
+        songName=SharedPreferenceUtils.getCurrentSongPath(applicationContext)!!
         mediaPlayer.start()
 
     }
@@ -107,7 +126,8 @@ class MusicForegroundService: Service(),MediaPlayer.OnPreparedListener{
 
         // Stop foreground service and remove the notification.
         stopForeground(true)
-        // Stop the foreground service.
+        getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(this)
+        SharedPreferenceUtils.savePlayingState(applicationContext,false)
         stopSelf()
     }
 }

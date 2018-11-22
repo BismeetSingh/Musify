@@ -23,6 +23,14 @@ object SharedPreferenceUtils {
     fun getCurrentSongPath(context: Context): String? {
         return getSharedPreferences(context).getString(Constants.SONGPATH, "")
     }
+    fun setCurrentAlbumid(context: Context, newValue: Long) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putLong(Constants.ALBUM_ID, newValue)
+        editor.apply()
+    }
+    fun getCurrentAlbumId(context: Context): Long? {
+        return getSharedPreferences(context).getLong(Constants.ALBUM_ID, 0)
+    }
 
     fun setCurrentArtist(context: Context, newValue: String) {
         val editor = getSharedPreferences(context).edit()

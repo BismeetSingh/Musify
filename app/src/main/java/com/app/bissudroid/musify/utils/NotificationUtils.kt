@@ -68,13 +68,13 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
         }
     }
-
+//TODO show music control notifications
     fun getAndroidChannelNotification(title: String, body: String): NotificationCompat.Builder {
         val largeIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.musicicon)
         val bigTextStyle = NotificationCompat.BigTextStyle()
-        bigTextStyle.setBigContentTitle("Music player implemented by foreground service.")
+        bigTextStyle.setBigContentTitle(SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
         val intent = Intent()
-        bigTextStyle.bigText("Android foreground service is a android service which can run in foreground always, it can be controlled by user via notification.")
+        bigTextStyle.bigText(SharedPreferenceUtils.getCurrentSong(applicationContext))
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
         val playIntent = Intent(this, MusicForegroundService::class.java)

@@ -43,7 +43,6 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
             Constants.URI,
             songItems!!.get(holder.adapterPosition).albumid)
         toggleBars(position, holder)
-
         holder.bind(songItems!![position],context,uri)
 
 
@@ -59,13 +58,15 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
             holder.musicItemsBindingType.equalizerView.visibility = View.VISIBLE
             holder.musicItemsBindingType.equalizerView.animateBars()
             if (!songItems!![position].isPlaying) {
+                Timber.d("Now pause Adapter")
                 SharedPreferenceUtils.savePlayingState(context,true)
             } else {
-
+                Timber.d("Now play Adapter")
                 SharedPreferenceUtils.savePlayingState(context,false)
             }
             songItems!![position].isPlaying = !songItems!![position].isPlaying
         } else {
+            Timber.d("Now play Adapter")
             holder.musicItemsBindingType.equalizerView.visibility = View.GONE
             holder.musicItemsBindingType.equalizerView.stopBars()
             songItems!![position].isPlaying = false
@@ -77,6 +78,12 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
     fun updateList( songItems:ArrayList<Songs>)
     {
         this.songItems=songItems
+        if(SharedPreferenceUtils.getCurrentSong(context).isNullOrEmpty()){
+            SharedPreferenceUtils.setCurrentSong(context,songItems.get(0).songName)
+            SharedPreferenceUtils.setCurrentArtist(context,songItems.get(0).songArtist)
+            SharedPreferenceUtils.setCurrentSongPath(context,songItems.get(0).songPath)
+        }
+
         notifyDataSetChanged()
 
     }
@@ -101,10 +108,12 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
 
             musicItemsBindingType.songs = musicitem
             musicItemsBindingType.root.setOnClickListener {
+
                 mSelectedItemPosition=adapterPosition
                 SharedPreferenceUtils.setCurrentSong(context, musicItemsBindingType.songName.text.toString())
                 SharedPreferenceUtils.setCurrentSongPath(context,musicItemsBindingType.songs!!.songPath)
                 SharedPreferenceUtils.setCurrentArtist(context,musicItemsBindingType.songArtist.text.toString())
+                SharedPreferenceUtils.setCurrentAlbumid(context,songItems!!.get(adapterPosition).albumid)
 
                 onSongClick.onSongClick(adapterPosition, musicitem)
                 notifyDataSetChanged()
