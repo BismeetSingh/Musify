@@ -29,7 +29,15 @@ object SharedPreferenceUtils {
         editor.apply()
     }
     fun getCurrentAlbumId(context: Context): Long? {
-        return getSharedPreferences(context).getLong(Constants.ALBUM_ID, 0)
+        return getSharedPreferences(context).getLong(Constants.SEEKTOPOS, 0)
+    }
+    fun setCurrentSeekPosition(context: Context, newValue: Int) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putInt(Constants.ALBUM_ID, newValue)
+        editor.apply()
+    }
+    fun getCurrentSeekPosition(context: Context): Int? {
+        return getSharedPreferences(context).getInt(Constants.SEEKTOPOS, 0)
     }
 
     fun setCurrentArtist(context: Context, newValue: String) {
@@ -55,6 +63,7 @@ object SharedPreferenceUtils {
         editor.putBoolean(Constants.ISPLAYING, isPlaying)
         editor.apply()
     }
+
 
 
 }

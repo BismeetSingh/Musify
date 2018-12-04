@@ -20,13 +20,22 @@ import timber.log.Timber
 
 class SongAdapter(val context: Context,val onSongClickListener: onSongClickListener) : RecyclerView.Adapter<SongAdapter.SongHolder>() {
     private var songItems: ArrayList<Songs>?=null
-      var mSelectedItemPosition = -1
+      var mSelectedItemPosition = RecyclerView.NO_POSITION
+
+
 
 
     override fun onCreateViewHolder(parent: ViewGroup, p1: Int): SongHolder {
        val musicItemsBinding= MusicItemsBinding.inflate(LayoutInflater.from(parent.context),parent,false)
-
         return SongHolder(musicItemsBinding,onSongClickListener)
+    }
+
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return position
     }
 
 
@@ -35,6 +44,7 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
         return songItems!!.size
         else{
             return 0
+//TODO fix crash here on data source
         }
     }
 
@@ -42,8 +52,14 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
         val uri = ContentUris.withAppendedId(
             Constants.URI,
             songItems!!.get(holder.adapterPosition).albumid)
-        toggleBars(position, holder)
-        holder.bind(songItems!![position],context,uri)
+        holder.bind(songItems!!.get(holder.adapterPosition),context,uri,position)
+        if(mSelectedItemPosition!=position){
+            holder.musicItemsBindingType.equalizerView.visibility = View.GONE
+               holder.musicItemsBindingType.equalizerView.stopBars()
+                songItems!![position].isPlaying = false
+                SharedPreferenceUtils.savePlayingState(context, true)
+        }
+
 
 
 
@@ -51,28 +67,38 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
 
     }
 
-    private fun toggleBars(position: Int, holder: SongHolder) {
-
-
-        if (mSelectedItemPosition == position) {
-            holder.musicItemsBindingType.equalizerView.visibility = View.VISIBLE
-            holder.musicItemsBindingType.equalizerView.animateBars()
-            if (!songItems!![position].isPlaying) {
-                Timber.d("Now pause Adapter")
-                SharedPreferenceUtils.savePlayingState(context,true)
-            } else {
-                Timber.d("Now play Adapter")
-                SharedPreferenceUtils.savePlayingState(context,false)
+    private fun toggleBars(
+        position: Int,
+        musicItemsBindingType: MusicItemsBinding
+    ) {
+//TODO fix animation.
+            if (mSelectedItemPosition==position) {
+                musicItemsBindingType.equalizerView.visibility = View.VISIBLE
+                Timber.d("%s", musicItemsBindingType.equalizerView.toString())
+                musicItemsBindingType.equalizerView.animateBars()
+                if (!songItems!![position].isPlaying) {
+                    Timber.d("Now pause Adapter")
+                    SharedPreferenceUtils.savePlayingState(context, true)
+                } else {
+                    Timber.d("Now play Adapter")
+                    SharedPreferenceUtils.savePlayingState(context, false)
+                }
+                songItems!![position].isPlaying = !songItems!![position].isPlaying
             }
-            songItems!![position].isPlaying = !songItems!![position].isPlaying
-        } else {
-            Timber.d("Now play Adapter")
-            holder.musicItemsBindingType.equalizerView.visibility = View.GONE
-            holder.musicItemsBindingType.equalizerView.stopBars()
-            songItems!![position].isPlaying = false
-            SharedPreferenceUtils.savePlayingState(context,true)
 
-        }
+//        notifyDataSetChanged()
+//            } else {
+//                Timber.d("Now play Adapter")
+//                musicItemsBindingType.equalizerView.visibility = View.GONE
+//               musicItemsBindingType.equalizerView.stopBars()
+//                songItems!![position].isPlaying = false
+//                SharedPreferenceUtils.savePlayingState(context, true)
+//
+//            }
+        Timber.d("Bars playing and visible %s %s",musicItemsBindingType.equalizerView.isAnimating,
+            musicItemsBindingType.equalizerView.visibility)
+
+
     }
 
     fun updateList( songItems:ArrayList<Songs>)
@@ -92,39 +118,45 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
         musicItemsBinding: MusicItemsBinding,
         onSongClickListener: onSongClickListener
     ) : RecyclerView.ViewHolder(musicItemsBinding.root) {
-        var musicItemsBindingType = musicItemsBinding
+      var musicItemsBindingType = musicItemsBinding
+
+
+      var onSongClick = onSongClickListener
+
+      fun bind(
+          musicitem: Songs,
+          context: Context,
+          uri: Uri
+          , position: Int
+
+      ) {
+
+          musicItemsBindingType.songs = musicitem
+          musicItemsBindingType.root.setOnClickListener {
+
+              mSelectedItemPosition = adapterPosition
+              notifyDataSetChanged()
+              Timber.d("%s",musicItemsBindingType.equalizerView.toString())
+
+                toggleBars(position,musicItemsBindingType)
 
 
 
-        var onSongClick = onSongClickListener
+//              toggleBars(position, musicItemsBindingType)
+              SharedPreferenceUtils.setCurrentSong(context, musicItemsBindingType.songName.text.toString())
+              SharedPreferenceUtils.setCurrentSongPath(context, musicItemsBindingType.songs!!.songPath)
+              SharedPreferenceUtils.setCurrentArtist(context, musicItemsBindingType.songArtist.text.toString())
+              SharedPreferenceUtils.setCurrentAlbumid(context, musicitem.albumid)
 
-        fun bind(
-            musicitem: Songs,
-            context: Context,
-            uri: Uri
-
-
-        ) {
-
-            musicItemsBindingType.songs = musicitem
-            musicItemsBindingType.root.setOnClickListener {
-
-                mSelectedItemPosition=adapterPosition
-                SharedPreferenceUtils.setCurrentSong(context, musicItemsBindingType.songName.text.toString())
-                SharedPreferenceUtils.setCurrentSongPath(context,musicItemsBindingType.songs!!.songPath)
-                SharedPreferenceUtils.setCurrentArtist(context,musicItemsBindingType.songArtist.text.toString())
-                SharedPreferenceUtils.setCurrentAlbumid(context,songItems!!.get(adapterPosition).albumid)
-
-                onSongClick.onSongClick(adapterPosition, musicitem)
-                notifyDataSetChanged()
-            }
-            Glide.with(context).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
-                .into(musicItemsBindingType.songThumbnail)
-            musicItemsBindingType.executePendingBindings()
-        }
-    }
+              onSongClick.onSongClick(adapterPosition, musicitem)
+//              notifyDataSetChanged()
+//            }
+          }
+              Glide.with(context).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
+                  .into(musicItemsBindingType.songThumbnail)
+              musicItemsBindingType.executePendingBindings()
+          }
+      }
 
 
-
-
-}
+  }

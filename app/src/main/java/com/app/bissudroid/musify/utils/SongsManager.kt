@@ -18,7 +18,8 @@ object SongsManager {
             MediaStore.Audio.AudioColumns.DURATION,
             MediaStore.Audio.AudioColumns.ALBUM,
             MediaStore.Audio.ArtistColumns.ARTIST
-        ,MediaStore.Audio.Albums.ALBUM_ID
+        ,MediaStore.Audio.Albums.ALBUM_ID,
+            MediaStore.Audio.Media._ID
         )
         val c = context.contentResolver.query(
             uri,
@@ -38,7 +39,8 @@ object SongsManager {
                 val album = c.getString(2)
                 val artist = c.getString(3)
                 val albumid=c.getLong(4)
-                val audioModel = Songs(name.  substring(0,name.lastIndexOf(".")), artist, false, duration, album, path,albumid)
+                val idColumn = c.getLong(5);
+                val audioModel = Songs(name.  substring(0,name.lastIndexOf(".")), artist, false, duration, album, path,albumid,idColumn)
                 tempAudioList.add(audioModel)
             }
             c.close()

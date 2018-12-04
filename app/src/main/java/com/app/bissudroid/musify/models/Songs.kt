@@ -8,7 +8,8 @@ package com.app.bissudroid.musify.models
       var songDuration: String,
       var songAlbum: String,
       var songPath: String,
-      var albumid: Long
+      var albumid: Long,
+     var mediaId: Long
 
   ) {
 

@@ -54,11 +54,11 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 
 
     override fun onSongClick(pos: Int, songItem: Songs) {
-
         val intent = Intent(activity, MusicForegroundService::class.java)
-            .putExtra(Constants.SONGPATH,songItem.songPath)
+
         intent.setAction(Constants.ACTION_PLAY)
         activity!!.startService(intent)
+
 
     if(songItem.songName.indexOf(".")!=-1) {
         currentSong.songName.text = songItem.songName.substring(0, songItem.songName.lastIndexOf("."))
@@ -100,21 +100,23 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         val view=LayoutInflater.from(context).inflate(R.layout.empty_view,root,false);
         musicList.setEmptyView(view)
         currentSong.songName.isSelected=true
-        songAdapter=SongAdapter(context!!,this)
         val intent = Intent(activity, MusicForegroundService::class.java)
-            .putExtra(Constants.SONGPATH,"")
-        intent.setAction(Constants.ACTION_START_FOREGROUND_SERVICE)
         activity!!.startService(intent)
+        songAdapter=SongAdapter(context!!,this)
         if(Build.VERSION.SDK_INT<23){
             songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
         }
         else{
+//TODO fix crash here on data source
             getPermissions()
         }
         musicList.adapter=songAdapter
         currentSong.songName.text=SharedPreferenceUtils.getCurrentSong(context!!)
 
         currentSong.songArtist.text=SharedPreferenceUtils.getCurrentSongArtist(context!!)
+//        val uri = ContentUris.withAppendedId(
+//            Constants.URI,
+//            songItems!!.get(holder.adapterPosition).albumid)
         val uri = ContentUris.withAppendedId(
             Constants.URI,
             SharedPreferenceUtils.getCurrentAlbumId(context!!)!!)
