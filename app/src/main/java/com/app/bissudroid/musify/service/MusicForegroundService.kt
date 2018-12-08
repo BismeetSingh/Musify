@@ -1,21 +1,20 @@
 package com.app.bissudroid.musify.service
-
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.IBinder
-import android.widget.Toast
-import com.app.bissudroid.musify.interfaces.PlayerAdapter
-import com.app.bissudroid.musify.utils.Constants
+import com.app.bissudroid.musify.events.PlaySong
+import com.app.bissudroid.musify.events.PlaybackState
+import com.app.bissudroid.musify.events.RxBus
+import com.app.bissudroid.musify.events.SavePosition
 import com.app.bissudroid.musify.utils.NotificationUtils
 import com.app.bissudroid.musify.utils.SharedPreferenceUtils
+import io.reactivex.disposables.Disposable
 import timber.log.Timber
 
 class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
-    SharedPreferences.OnSharedPreferenceChangeListener,MediaPlayer.OnErrorListener
+  MediaPlayer.OnErrorListener
 ,MediaPlayer.OnCompletionListener,AudioManager.OnAudioFocusChangeListener{
     private var songSeek = 0
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
@@ -45,23 +44,18 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     }
 
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        Timber.d("Called Preferences")
-        if (sharedPreferences!!.getBoolean(Constants.ISPLAYING, false)) {
-            resumeSong()
-        } else {
-            pauseSong()
-        }
-
-    }
 
     override fun onPrepared(mp: MediaPlayer?) {
+        mp?.seekTo(SharedPreferenceUtils.getCurrentSeekPosition(applicationContext)!!)
+        Timber.d("%d",mp?.currentPosition);
         mp?.start()
+        startForegroundService()
     }
 
     lateinit var mediaPlayer: MediaPlayer
 
     private var songName: String = ""
+    private lateinit var personDisposable: Disposable
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -71,43 +65,58 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     override fun onCreate() {
         super.onCreate()
         mediaPlayer = MediaPlayer()
+        startForegroundService()
 
 
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        getSharedPreferences(
-            Constants.SHARED_PREFERENCE_NAME,
-            Context.MODE_PRIVATE
-        ).registerOnSharedPreferenceChangeListener(this)
 
 
-        val action = intent.getAction()
+//        val action = intent.getAction()
+        RxBus.listen(PlaySong::class.java).subscribe{
+            playSong()
+        }
+        RxBus.listen(SavePosition::class.java).subscribe{
+            Timber.d("Position %d",mediaPlayer.currentPosition)
+            SharedPreferenceUtils.setCurrentSeekPosition(applicationContext,mediaPlayer.currentPosition)
 
+        }
 
-        when (action) {
-            Constants.ACTION_START_FOREGROUND_SERVICE -> {
-                startForegroundService()
-                Toast.makeText(applicationContext, "Foreground service is started.", Toast.LENGTH_LONG).show()
-            }
-            Constants.ACTION_STOP_FOREGROUND_SERVICE -> {
-                stopForegroundService()
-                Toast.makeText(applicationContext, "Foreground service is stopped.", Toast.LENGTH_LONG).show()
-            }
-            Constants.ACTION_PLAY -> {
-                playSong()
-//                    Toast.makeText(getApplicationContext(), "You click Play button.", Toast.LENGTH_LONG).show()
-            }
-            Constants.ACTION_PAUSE -> {
-                pauseSong()
+        RxBus.listen(PlaybackState::class.java).subscribe {
+//            adapter.addPerson(person = it.)/
+            Timber.d("%s",it.playing)
 
-            }
-            Constants.ACTION_RESUME -> {
+            if(it.playing){
                 resumeSong()
-
+            }
+            else{
+                pauseSong()
             }
 
         }
+
+
+//        when (action) {
+////            Constants.ACTION_START_FOREGROUND_SERVICE -> {
+////                startForegroundService()
+////                Toast.makeText(applicationContext, "Foreground service is started.", Toast.LENGTH_LONG).show()
+////            }
+//            Constants.ACTION_STOP_FOREGROUND_SERVICE -> {
+//                stopForegroundService()
+//                Toast.makeText(applicationContext, "Foreground service is stopped.", Toast.LENGTH_LONG).show()
+//            }
+//
+//            Constants.ACTION_PAUSE -> {
+//                pauseSong()
+//
+//            }
+//            Constants.ACTION_RESUME -> {
+//                resumeSong()
+//
+//            }
+
+//        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -124,11 +133,14 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         Timber.d("Played")
         songName = SharedPreferenceUtils.getCurrentSongPath(applicationContext)!!
         mediaPlayer.reset()
-        mediaPlayer.seekTo(SharedPreferenceUtils.getCurrentSeekPosition(applicationContext)!!)
+
+        Timber.d("%d",SharedPreferenceUtils.getCurrentSeekPosition(applicationContext!!))
+
         if (!mediaPlayer.isPlaying) {
 
             mediaPlayer.setDataSource(songName)
             mediaPlayer.setOnPreparedListener(this)
+
             mediaPlayer.prepareAsync()
 
         } else if (SharedPreferenceUtils.isPlaying(applicationContext) && mediaPlayer.isPlaying) {
@@ -139,9 +151,9 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 
 
             mediaPlayer.setDataSource(songName)
-
-            mediaPlayer.setOnPreparedListener(this)
-            mediaPlayer.prepareAsync()
+//
+//            mediaPlayer.setOnPreparedListener(this)
+//            mediaPlayer.prepareAsync()
 
 
         }
@@ -150,7 +162,8 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     //This method pauses the current song
     private fun pauseSong() {
         Timber.d("Paused")
-//        SharedPreferenceUtils.setCurrentSeekPosition(applicationContext,mediaPlayer.currentPosition)
+        SharedPreferenceUtils.setCurrentSeekPosition(applicationContext,mediaPlayer.currentPosition)
+        Timber.d("%d",mediaPlayer.currentPosition);
         mediaPlayer.pause()
 
     }
@@ -164,7 +177,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         }
         else
         {
-            mediaPlayer.seekTo(SharedPreferenceUtils.getCurrentSeekPosition(applicationContext)!!)
+//            mediaPlayer.seekTo(SharedPreferenceUtils.getCurrentSeekPosition(applicationContext)!!)
             mediaPlayer.start()
         }
 
@@ -179,12 +192,8 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     private fun stopForegroundService() {
 
         // Stop foreground service and remove the notification.
-        stopForeground(true)
-        getSharedPreferences(
-            Constants.SHARED_PREFERENCE_NAME,
-            Context.MODE_PRIVATE
-        ).unregisterOnSharedPreferenceChangeListener(this)
         SharedPreferenceUtils.savePlayingState(applicationContext, false)
+        stopForeground(true)
         stopSelf()
     }
 //    public enum PlayerStates{PAUSED,STOPPED,PLAYING};

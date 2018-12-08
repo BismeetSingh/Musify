@@ -4,11 +4,8 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat.requestPermissions
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
@@ -16,8 +13,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.app.bissudroid.musify.R
-import com.app.bissudroid.musify.R.id.*
 import com.app.bissudroid.musify.adapter.SongAdapter
+import com.app.bissudroid.musify.events.*
 import com.app.bissudroid.musify.interfaces.onSongClickListener
 import com.app.bissudroid.musify.models.Songs
 import com.app.bissudroid.musify.service.MusicForegroundService
@@ -41,11 +38,18 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
                     Timber.d("Now pause")
                     currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.play_music))
                     SharedPreferenceUtils.savePlayingState(context!!,false)
+                    RxBus.publish(PlaybackState(false))
+                    val holder=musicList.findViewHolderForAdapterPosition(songAdapter.mSelectedItemPosition)
+                    RxBus.publish(AdapterState(holder as SongAdapter.SongHolder?,false))
                 }
                 else{
-                    Timber.d("Play Time")
+
                     currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
                     SharedPreferenceUtils.savePlayingState(context!!,true)
+                    RxBus.publish(PlaybackState(true))
+                    val holder=musicList.findViewHolderForAdapterPosition(songAdapter.mSelectedItemPosition)
+                    RxBus.publish(AdapterState(holder as SongAdapter.SongHolder?,true))
+
                 }
 
             }
@@ -54,12 +58,10 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 
 
     override fun onSongClick(pos: Int, songItem: Songs) {
-        val intent = Intent(activity, MusicForegroundService::class.java)
-
-        intent.setAction(Constants.ACTION_PLAY)
-        activity!!.startService(intent)
+        RxBus.publish(PlaySong())
 
 
+//songAdapter.subscribeStates()
     if(songItem.songName.indexOf(".")!=-1) {
         currentSong.songName.text = songItem.songName.substring(0, songItem.songName.lastIndexOf("."))
     }
@@ -71,7 +73,7 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 
     val uri = ContentUris.withAppendedId(
         Constants.URI,
-        songItem.albumid
+        songItem.albumid.toLong()
     )
     Glide.with(context!!).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
         .into(currentSong.songThumbnail)
@@ -96,7 +98,7 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         musicList.setHasFixedSize(false)
-        musicList.layoutManager=LinearLayoutManager(activity,LinearLayoutManager.VERTICAL,false)
+        musicList.layoutManager= LinearLayoutManager(activity,LinearLayoutManager.VERTICAL,false)
         val view=LayoutInflater.from(context).inflate(R.layout.empty_view,root,false);
         musicList.setEmptyView(view)
         currentSong.songName.isSelected=true
@@ -114,14 +116,12 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         currentSong.songName.text=SharedPreferenceUtils.getCurrentSong(context!!)
 
         currentSong.songArtist.text=SharedPreferenceUtils.getCurrentSongArtist(context!!)
-//        val uri = ContentUris.withAppendedId(
-//            Constants.URI,
-//            songItems!!.get(holder.adapterPosition).albumid)
         val uri = ContentUris.withAppendedId(
             Constants.URI,
-            SharedPreferenceUtils.getCurrentAlbumId(context!!)!!)
+            SharedPreferenceUtils.getCurrentAlbumId(context!!)?.toLong()!!)
                     Glide.with(context!!).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
                 .into(currentSong.songThumbnail)
+        songAdapter.subscribeStates()
 
     }
 

@@ -9,24 +9,31 @@ import android.view.View
 import android.view.ViewGroup
 import com.app.bissudroid.musify.R
 import com.app.bissudroid.musify.databinding.MusicItemsBinding
+import com.app.bissudroid.musify.events.AdapterState
+import com.app.bissudroid.musify.events.PlaybackState
+import com.app.bissudroid.musify.events.RxBus
 import com.app.bissudroid.musify.interfaces.onSongClickListener
 import com.app.bissudroid.musify.models.Songs
 import com.app.bissudroid.musify.utils.Constants
 import com.app.bissudroid.musify.utils.SharedPreferenceUtils
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import rx.internal.util.RxRingBuffer
 import timber.log.Timber
 
 
-class SongAdapter(val context: Context,val onSongClickListener: onSongClickListener) : RecyclerView.Adapter<SongAdapter.SongHolder>() {
+class SongAdapter(val context: Context,val onSongClickListener: onSongClickListener) : RecyclerView.Adapter<SongAdapter.SongHolder>()
+{
     private var songItems: ArrayList<Songs>?=null
       var mSelectedItemPosition = RecyclerView.NO_POSITION
+    var isFirstSong:Boolean=true
 
 
 
 
     override fun onCreateViewHolder(parent: ViewGroup, p1: Int): SongHolder {
        val musicItemsBinding= MusicItemsBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+
         return SongHolder(musicItemsBinding,onSongClickListener)
     }
 
@@ -51,50 +58,60 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
     override fun onBindViewHolder(holder: SongHolder, position: Int) {
         val uri = ContentUris.withAppendedId(
             Constants.URI,
-            songItems!!.get(holder.adapterPosition).albumid)
+            songItems!!.get(holder.adapterPosition).albumid.toLong()
+        )
+        if (isFirstSong && songItems!!.get(position).albumid==SharedPreferenceUtils.getCurrentAlbumId(context) && !songItems!!.get(position).isPlaying){
+            holder.musicItemsBindingType.equalizerView.visibility=View.VISIBLE
+            mSelectedItemPosition=holder.adapterPosition
+            isFirstSong=false
+            holder.musicItemsBindingType.equalizerView.stopBars()
+            Timber.d("Above %d %d",mSelectedItemPosition,holder.adapterPosition)
+        }
+        subscribeStates()
+
+
         holder.bind(songItems!!.get(holder.adapterPosition),context,uri,position)
-        if(mSelectedItemPosition!=position){
+        if(mSelectedItemPosition!=position ){
             holder.musicItemsBindingType.equalizerView.visibility = View.GONE
                holder.musicItemsBindingType.equalizerView.stopBars()
-                songItems!![position].isPlaying = false
-                SharedPreferenceUtils.savePlayingState(context, true)
+            Timber.d("Below %d %d",mSelectedItemPosition,position)
+
         }
 
-
-
-
-
-
+    }
+//TODO fix animations.
+fun subscribeStates() {
+        RxBus.listen(AdapterState::class.java).subscribe {
+            if (it.viewHolder != null) if (it.play) {
+                it.viewHolder.musicItemsBindingType.equalizerView.visibility=View.VISIBLE
+                it.viewHolder.musicItemsBindingType.equalizerView.animateBars()
+            } else {
+                it.viewHolder.musicItemsBindingType.equalizerView.stopBars()
+            }
+        }
     }
 
     private fun toggleBars(
         position: Int,
         musicItemsBindingType: MusicItemsBinding
     ) {
-//TODO fix animation.
             if (mSelectedItemPosition==position) {
                 musicItemsBindingType.equalizerView.visibility = View.VISIBLE
                 Timber.d("%s", musicItemsBindingType.equalizerView.toString())
                 musicItemsBindingType.equalizerView.animateBars()
+                SharedPreferenceUtils.setCurrentSeekPosition(context,0)
                 if (!songItems!![position].isPlaying) {
                     Timber.d("Now pause Adapter")
                     SharedPreferenceUtils.savePlayingState(context, true)
+                    RxBus.publish(PlaybackState(true))
                 } else {
                     Timber.d("Now play Adapter")
                     SharedPreferenceUtils.savePlayingState(context, false)
+                    RxBus.publish(PlaybackState(false))
                 }
                 songItems!![position].isPlaying = !songItems!![position].isPlaying
             }
 
-//        notifyDataSetChanged()
-//            } else {
-//                Timber.d("Now play Adapter")
-//                musicItemsBindingType.equalizerView.visibility = View.GONE
-//               musicItemsBindingType.equalizerView.stopBars()
-//                songItems!![position].isPlaying = false
-//                SharedPreferenceUtils.savePlayingState(context, true)
-//
-//            }
         Timber.d("Bars playing and visible %s %s",musicItemsBindingType.equalizerView.isAnimating,
             musicItemsBindingType.equalizerView.visibility)
 
@@ -140,9 +157,6 @@ class SongAdapter(val context: Context,val onSongClickListener: onSongClickListe
 
                 toggleBars(position,musicItemsBindingType)
 
-
-
-//              toggleBars(position, musicItemsBindingType)
               SharedPreferenceUtils.setCurrentSong(context, musicItemsBindingType.songName.text.toString())
               SharedPreferenceUtils.setCurrentSongPath(context, musicItemsBindingType.songs!!.songPath)
               SharedPreferenceUtils.setCurrentArtist(context, musicItemsBindingType.songArtist.text.toString())

@@ -2,6 +2,7 @@ package com.app.bissudroid.musify.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import timber.log.Timber
 
 object SharedPreferenceUtils {
 
@@ -23,17 +24,17 @@ object SharedPreferenceUtils {
     fun getCurrentSongPath(context: Context): String? {
         return getSharedPreferences(context).getString(Constants.SONGPATH, "")
     }
-    fun setCurrentAlbumid(context: Context, newValue: Long) {
+    fun setCurrentAlbumid(context: Context, newValue: Int) {
         val editor = getSharedPreferences(context).edit()
-        editor.putLong(Constants.ALBUM_ID, newValue)
+        editor.putInt(Constants.ALBUM_ID, newValue)
         editor.apply()
     }
-    fun getCurrentAlbumId(context: Context): Long? {
-        return getSharedPreferences(context).getLong(Constants.SEEKTOPOS, 0)
+    fun getCurrentAlbumId(context: Context): Int? {
+        return getSharedPreferences(context).getInt(Constants.ALBUM_ID,0)
     }
     fun setCurrentSeekPosition(context: Context, newValue: Int) {
         val editor = getSharedPreferences(context).edit()
-        editor.putInt(Constants.ALBUM_ID, newValue)
+        editor.putInt(Constants.SEEKTOPOS, newValue)
         editor.apply()
     }
     fun getCurrentSeekPosition(context: Context): Int? {

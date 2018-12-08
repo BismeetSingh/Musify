@@ -10,8 +10,11 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import com.app.bissudroid.musify.events.RxBus
+import com.app.bissudroid.musify.events.SavePosition
 import com.app.bissudroid.musify.fragments.*
 import com.app.bissudroid.musify.utils.Constants.Companion.MY_PERMISSIONS_REQUEST_READ_MEDIA
+import com.app.bissudroid.musify.utils.SharedPreferenceUtils
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -80,6 +83,12 @@ class MainActivity : AppCompatActivity() {
            }
             return null
         }
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RxBus.publish(SavePosition())
 
     }
 

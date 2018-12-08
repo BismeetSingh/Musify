@@ -8,41 +8,16 @@ import rx.subjects.SerializedSubject
 import rx.subscriptions.CompositeSubscription
 
 
-class RxBus {
+object RxBus {
 
-    private val bus = SerializedSubject(PublishSubject.create<Any>())
+    private val publisher = PublishSubject.create<Any>()
 
-    private val subscriptionMap = HashMap<Any, CompositeSubscription>()
-
-    fun post(event: Any) {
-        if (this.bus.hasObservers()) {
-            this.bus.onNext(event)
-        }
+    fun publish(event: Any) {
+        publisher.onNext(event)
+//        publisher.onError(Throwable("Error Occurred"))
     }
 
-    private fun <T> observe(eventClass: Class<T>): Observable<T> {
-        return this.bus
-                .filter { o -> o != null }
-                .filter({ eventClass.isInstance(it) })
-                .cast(eventClass)
-    }
-
-    fun <T> subscribe(eventClass: Class<T>, subscriptionAnchor: Any, action: Action1<T>) {
-        val subscription = observe(eventClass).subscribe(action)
-        getCompositeSubscription(subscriptionAnchor).add(subscription)
-    }
-
-    private fun getCompositeSubscription(subscriptionAnchor: Any): CompositeSubscription {
-        var compositeSubscription = subscriptionMap[subscriptionAnchor]
-        if (compositeSubscription == null) {
-            compositeSubscription = CompositeSubscription()
-            subscriptionMap[subscriptionAnchor] = compositeSubscription
-        }
-        return compositeSubscription
-    }
-
-    fun cleanup(subscriptionAnchor: Any) {
-        val compositeSubscription = subscriptionMap.remove(subscriptionAnchor)
-        compositeSubscription?.clear()
-    }
+    // Listen should return an Observable and not the publisher
+    // Using ofType we filter only events that match that class type
+    fun <T> listen(eventType: Class<T>): Observable<T> = publisher.ofType(eventType)
 }

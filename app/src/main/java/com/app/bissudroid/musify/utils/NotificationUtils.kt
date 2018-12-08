@@ -18,7 +18,6 @@ import android.support.v4.content.ContextCompat
 import com.app.bissudroid.musify.R
 import com.app.bissudroid.musify.service.MusicForegroundService
 
-
 class NotificationUtils(base: Context) : ContextWrapper(base) {
     val ACTION_PAUSE = "ACTION_PAUSE"
     val ACTION_PLAY = "ACTION_PLAY"
@@ -55,9 +54,11 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             // Sets whether notifications posted to this channel should display notification lights
             androidChannel.enableLights(true)
             // Sets whether notification posted to this channel should vibrate.
-            androidChannel.enableVibration(true)
+            androidChannel.enableVibration(false)
+
             // Sets the notification light color for notifications posted to this channel
-            androidChannel.lightColor = Color.GREEN
+            androidChannel.lightColor = Color.WHITE
+            androidChannel.setSound(null,null)
 
             // Sets whether notifications posted to this channel appear on the lockscreen or not
             androidChannel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
@@ -78,12 +79,12 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
         val playIntent = Intent(this, MusicForegroundService::class.java)
-        playIntent.setAction(ACTION_PLAY)
+    playIntent.action = ACTION_PLAY
         val pendingPlayIntent = PendingIntent.getService(this, 0, playIntent, 0)
         val playAction = NotificationCompat.Action(R.drawable.play_music, "Play", pendingPlayIntent)
 
         val pauseIntent = Intent(this, MusicForegroundService::class.java)
-        pauseIntent.setAction(ACTION_PAUSE)
+    pauseIntent.action = ACTION_PAUSE
         val pendingPrevIntent = PendingIntent.getService(this, 0, pauseIntent, 0)
         val prevAction = NotificationCompat.Action(android.R.drawable.ic_media_pause, "Pause", pendingPrevIntent)
         return NotificationCompat.Builder(applicationContext, ANDROID_CHANNEL_ID)
@@ -92,13 +93,18 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             .setStyle(bigTextStyle)
             .setWhen(System.currentTimeMillis())
             .setSmallIcon(R.drawable.musicicon)
-            .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)
+            .setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT)
             .setLargeIcon(largeIconBitmap)
             .addAction(playAction)
             .addAction(prevAction)
+            .setDefaults(Notification.DEFAULT_LIGHTS)
+            .setDefaults(Notification.DEFAULT_SOUND)
+            .setVibrate(longArrayOf(-1))
+            .setSound(null)
             .setFullScreenIntent(pendingIntent,true)
             .setSmallIcon(android.R.drawable.stat_notify_more)
             .setAutoCancel(true)
+
     }
 
     companion object {
