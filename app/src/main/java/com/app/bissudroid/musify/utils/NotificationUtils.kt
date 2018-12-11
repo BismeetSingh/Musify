@@ -4,19 +4,28 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
-import android.content.ContextWrapper
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.os.Build
+import android.provider.MediaStore
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
-import android.support.v4.content.LocalBroadcastManager
+import android.support.v4.content.ContextCompat
+import android.support.v4.graphics.drawable.DrawableCompat
 import android.widget.RemoteViews
 import com.app.bissudroid.musify.R
 import com.app.bissudroid.musify.SongReceiver
-import timber.log.Timber
+import android.support.v4.media.app.NotificationCompat.MediaStyle;
+import android.support.v4.media.session.MediaButtonReceiver
+import com.app.bissudroid.musify.R.id.currentSong
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import kotlinx.android.synthetic.main.bottom_now_playing_view.view.*
+import kotlinx.android.synthetic.main.fragment_main.*
+import java.io.FileNotFoundException
 
 
 class NotificationUtils(base: Context) : ContextWrapper(base) {
@@ -34,17 +43,11 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
                 mManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 val filter = IntentFilter()
-                val pauseFilter=IntentFilter()
-//
                 filter.addAction(Constants.ACTION_PLAY)
                 filter.addAction(Constants.ACTION_PAUSE)
-//                pauseFilter.addAction(Constants.ACTION_PAUSE)
-//
+
                 registerReceiver(songReceiver, filter)
-//                registerReceiver(songReceiver,pauseFilter)
-//                Timber.d(LocalBroadcastManager.getInstance(applicationContext).toString())
-//                LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PAUSE))
-//                Timber.d(LocalBroadcastManager.getInstance(applicationContext).toString())
+
 
 
             }
@@ -55,6 +58,9 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
     init {
         createChannels()
+    }
+    public fun unregisterReceiver(){
+        unregisterReceiver(songReceiver)
     }
 
     fun createChannels() {
@@ -78,7 +84,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             androidChannel.setSound(null, null)
 
             // Sets whether notifications posted to this channel appear on the lockscreen or not
-            androidChannel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+            androidChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
 
 
             manager.createNotificationChannel(androidChannel)
@@ -89,62 +95,82 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
     //TODO show music control notifications
     fun getAndroidChannelNotification(title: String): NotificationCompat.Builder {
-        val contentView: RemoteViews
+
         val playIntent:Intent
+        val  action:NotificationCompat.Action
+
+
         if(!SharedPreferenceUtils.isPlaying(this))
 
         {
             playIntent = Intent(Constants.ACTION_PLAY)
-             contentView = RemoteViews(packageName, R.layout.notification_layout)
-//            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PLAY))
-
-
-//            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(this,SongReceiver::class.java))
-
+            action = NotificationCompat.Action(R.drawable.play_music,"Play",null)
+//             contentView = RemoteViews(packageName, R.layout.notification_layout)
 
         }
         else{
             playIntent = Intent(Constants.ACTION_PAUSE)
-
-             contentView = RemoteViews(packageName, R.layout.notificationlayoutpause)
-//            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PAUSE))
-
-           // sendBroadcast(Intent(this,SongReceiver::class.java))
-
+            action = NotificationCompat.Action(R.drawable.pause_music,"Pause",null)
 
         }
+        val pendingPlayIntent = PendingIntent.getBroadcast(this, 1, playIntent, 0)
+        action.actionIntent=pendingPlayIntent;
 
-        contentView.setImageViewResource(R.id.image, R.drawable.musicicon)
-        contentView.setTextViewText(R.id.songName, SharedPreferenceUtils.getCurrentSong(applicationContext))
-        contentView.setTextViewText(R.id.songArtist, SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
+
         val largeIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.musicicon)
         val bigTextStyle = NotificationCompat.BigTextStyle()
         bigTextStyle.setBigContentTitle(SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
         bigTextStyle.bigText(SharedPreferenceUtils.getCurrentSong(applicationContext))
 //        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
-        val pendingPlayIntent = PendingIntent.getBroadcast(this, 1, playIntent, 0)
+
+
+        action.actionIntent=pendingPlayIntent;
+        var iconBitmap:Bitmap
+        val uri = ContentUris.withAppendedId(
+            Constants.URI,
+            SharedPreferenceUtils.getCurrentAlbumId(applicationContext!!)?.toLong()!!)
+            try {
+                iconBitmap=MediaStore.Images.Media.getBitmap(contentResolver,uri)
+            }
+            catch ( filenotfound:FileNotFoundException){
+                iconBitmap= getBitmapFromVectorDrawable(R.drawable.musicicon)!!
+            }
 
 
 
-        contentView.setOnClickPendingIntent(R.id.pauseNotificationSong, pendingPlayIntent)
+
+
+
+//        contentView.setOnClickPendingIntent(R.id.pauseNotificationSong, pendingPlayIntent)
 
         return NotificationCompat.Builder(applicationContext, ANDROID_CHANNEL_ID)
-//            .setStyle(bigTextStyle)
+            .setStyle(MediaStyle().setShowCancelButton(true).setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext,1)
+            ).setShowActionsInCompactView(0,1,2))
             .setWhen(System.currentTimeMillis())
-            .setSmallIcon(R.drawable.musicicon)
+            .setSmallIcon(R.drawable.notification_icon)
+
+            .setBadgeIconType(R.drawable.musicicon)
+            .setContentTitle(SharedPreferenceUtils.getCurrentSong(applicationContext))
+            .setContentText(SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
+            .setLargeIcon(iconBitmap)
             .setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT)
+
+            .addAction(R.drawable.previoussong,"Previous", null)
+            .addAction(action)
+            .addAction(R.drawable.nextsong,"Next",null)
 //            .setLargeIcon(largeIconBitmap)
-//            .addAction(playAction)
-//            .addAction(prevAction)
+
             .setDefaults(Notification.DEFAULT_LIGHTS)
             .setDefaults(Notification.DEFAULT_SOUND)
             .setVibrate(longArrayOf(-1))
             .setSound(null)
 //            .setFullScreenIntent(pendingIntent,true)
-            .setSmallIcon(android.R.drawable.stat_notify_more)
+
+
             .setAutoCancel(true)
-            .setContent(contentView)
+            .setShowWhen(true)
+
 
     }
 
@@ -152,6 +178,23 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
         val ANDROID_CHANNEL_ID = "com.bismeet.musify"
 
         val ANDROID_CHANNEL_NAME = "ANDROID CHANNEL"
+    }
+    fun getBitmapFromVectorDrawable(drawableId: Int): Bitmap? {
+        var drawable = ContextCompat.getDrawable(this, drawableId) ?: return null
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            drawable = DrawableCompat.wrap(drawable).mutate()
+        }
+
+        val bitmap = Bitmap.createBitmap(
+            drawable.intrinsicWidth,
+            drawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888) ?: return null
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+
+        return bitmap
     }
 
 }

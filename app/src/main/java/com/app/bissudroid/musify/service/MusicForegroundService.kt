@@ -19,7 +19,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
     lateinit var notificationUtils:NotificationUtils
     override fun onAudioFocusChange(focusChange: Int) {
@@ -50,7 +50,6 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     }
 
     lateinit var mediaPlayer: MediaPlayer
-
     private var songName: String = ""
     private lateinit var personDisposable: Disposable
 
@@ -152,9 +151,6 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 
 
             mediaPlayer.setDataSource(songName)
-//
-//            mediaPlayer.setOnPreparedListener(this)
-//            mediaPlayer.prepareAsync()notification_layout
 
 
         }
@@ -166,6 +162,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         SharedPreferenceUtils.setCurrentSeekPosition(applicationContext,mediaPlayer.currentPosition)
         Timber.d("%d",mediaPlayer.currentPosition);
         mediaPlayer.pause()
+
 
 
     }
@@ -194,9 +191,14 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     private fun stopForegroundService() {
 
         // Stop foreground service and remove the notification.
-        SharedPreferenceUtils.savePlayingState(applicationContext, false)
         stopForeground(true)
         stopSelf()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopForegroundService()
+        notificationUtils.unregisterReceiver()
     }
 //    public enum PlayerStates{PAUSED,STOPPED,PLAYING};
 //    PlayerStates state;
