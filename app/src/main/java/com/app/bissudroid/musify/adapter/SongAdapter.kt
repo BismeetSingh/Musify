@@ -85,9 +85,7 @@ fun subscribeStates() {
             if (it.viewHolder != null) if (it.play) {
                 it.viewHolder.musicItemsBindingType.equalizerView.visibility=View.VISIBLE
                 it.viewHolder.musicItemsBindingType.equalizerView.animateBars()
-            } else {
-                it.viewHolder.musicItemsBindingType.equalizerView.stopBars()
-            }
+            } else it.viewHolder.musicItemsBindingType.equalizerView.stopBars()
         }
     }
 
@@ -100,16 +98,16 @@ fun subscribeStates() {
                 Timber.d("%s", musicItemsBindingType.equalizerView.toString())
                 musicItemsBindingType.equalizerView.animateBars()
                 SharedPreferenceUtils.setCurrentSeekPosition(context,0)
-                if (!songItems!![position].isPlaying) {
-                    Timber.d("Now pause Adapter")
+//                if (!songItems!![position].isPlaying) {
+
                     SharedPreferenceUtils.savePlayingState(context, true)
                     RxBus.publish(PlaybackState(true))
-                } else {
-                    Timber.d("Now play Adapter")
-                    SharedPreferenceUtils.savePlayingState(context, false)
-                    RxBus.publish(PlaybackState(false))
-                }
-                songItems!![position].isPlaying = !songItems!![position].isPlaying
+//                } else {
+//                    Timber.d("Now play Adapter")
+//                    SharedPreferenceUtils.savePlayingState(context, false)
+//                    RxBus.publish(PlaybackState(false))
+//                }
+//                songItems!![position].isPlaying = !songItems!![position].isPlaying
             }
 
         Timber.d("Bars playing and visible %s %s",musicItemsBindingType.equalizerView.isAnimating,
@@ -122,9 +120,11 @@ fun subscribeStates() {
     {
         this.songItems=songItems
         if(SharedPreferenceUtils.getCurrentSong(context).isNullOrEmpty()){
-            SharedPreferenceUtils.setCurrentSong(context,songItems.get(0).songName)
-            SharedPreferenceUtils.setCurrentArtist(context,songItems.get(0).songArtist)
-            SharedPreferenceUtils.setCurrentSongPath(context,songItems.get(0).songPath)
+            if(songItems.size>0) {
+                SharedPreferenceUtils.setCurrentSong(context, songItems.get(0).songName)
+                SharedPreferenceUtils.setCurrentArtist(context, songItems.get(0).songArtist)
+                SharedPreferenceUtils.setCurrentSongPath(context, songItems.get(0).songPath)
+            }
         }
 
         notifyDataSetChanged()

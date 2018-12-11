@@ -7,31 +7,48 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.media.session.PlaybackState.ACTION_PAUSE
-import android.media.session.PlaybackState.ACTION_PLAY
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
-import android.support.v4.content.ContextCompat
+import android.support.v4.content.LocalBroadcastManager
+import android.widget.RemoteViews
 import com.app.bissudroid.musify.R
-import com.app.bissudroid.musify.service.MusicForegroundService
+import com.app.bissudroid.musify.SongReceiver
+import timber.log.Timber
+
 
 class NotificationUtils(base: Context) : ContextWrapper(base) {
-    val ACTION_PAUSE = "ACTION_PAUSE"
-    val ACTION_PLAY = "ACTION_PLAY"
+
 
     private var mManager: NotificationManager? = null
+    var songReceiver=SongReceiver()
+
+
 
     val manager: NotificationManager
         get() {
             if (mManager == null) {
 
+
                 mManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val filter = IntentFilter()
+                val pauseFilter=IntentFilter()
+//
+                filter.addAction(Constants.ACTION_PLAY)
+                filter.addAction(Constants.ACTION_PAUSE)
+//                pauseFilter.addAction(Constants.ACTION_PAUSE)
+//
+                registerReceiver(songReceiver, filter)
+//                registerReceiver(songReceiver,pauseFilter)
+//                Timber.d(LocalBroadcastManager.getInstance(applicationContext).toString())
+//                LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PAUSE))
+//                Timber.d(LocalBroadcastManager.getInstance(applicationContext).toString())
 
 
             }
+
             return mManager!!
         }
 
@@ -58,7 +75,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
             // Sets the notification light color for notifications posted to this channel
             androidChannel.lightColor = Color.WHITE
-            androidChannel.setSound(null,null)
+            androidChannel.setSound(null, null)
 
             // Sets whether notifications posted to this channel appear on the lockscreen or not
             androidChannel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
@@ -69,41 +86,65 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 
         }
     }
-//TODO show music control notifications
-    fun getAndroidChannelNotification(title: String, body: String): NotificationCompat.Builder {
+
+    //TODO show music control notifications
+    fun getAndroidChannelNotification(title: String): NotificationCompat.Builder {
+        val contentView: RemoteViews
+        val playIntent:Intent
+        if(!SharedPreferenceUtils.isPlaying(this))
+
+        {
+            playIntent = Intent(Constants.ACTION_PLAY)
+             contentView = RemoteViews(packageName, R.layout.notification_layout)
+//            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PLAY))
+
+
+//            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(this,SongReceiver::class.java))
+
+
+        }
+        else{
+            playIntent = Intent(Constants.ACTION_PAUSE)
+
+             contentView = RemoteViews(packageName, R.layout.notificationlayoutpause)
+//            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(Constants.ACTION_PAUSE))
+
+           // sendBroadcast(Intent(this,SongReceiver::class.java))
+
+
+        }
+
+        contentView.setImageViewResource(R.id.image, R.drawable.musicicon)
+        contentView.setTextViewText(R.id.songName, SharedPreferenceUtils.getCurrentSong(applicationContext))
+        contentView.setTextViewText(R.id.songArtist, SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
         val largeIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.musicicon)
         val bigTextStyle = NotificationCompat.BigTextStyle()
         bigTextStyle.setBigContentTitle(SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
-        val intent = Intent()
         bigTextStyle.bigText(SharedPreferenceUtils.getCurrentSong(applicationContext))
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+//        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
-        val playIntent = Intent(this, MusicForegroundService::class.java)
-    playIntent.action = ACTION_PLAY
-        val pendingPlayIntent = PendingIntent.getService(this, 0, playIntent, 0)
-        val playAction = NotificationCompat.Action(R.drawable.play_music, "Play", pendingPlayIntent)
+        val pendingPlayIntent = PendingIntent.getBroadcast(this, 1, playIntent, 0)
 
-        val pauseIntent = Intent(this, MusicForegroundService::class.java)
-    pauseIntent.action = ACTION_PAUSE
-        val pendingPrevIntent = PendingIntent.getService(this, 0, pauseIntent, 0)
-        val prevAction = NotificationCompat.Action(android.R.drawable.ic_media_pause, "Pause", pendingPrevIntent)
+
+
+        contentView.setOnClickPendingIntent(R.id.pauseNotificationSong, pendingPlayIntent)
+
         return NotificationCompat.Builder(applicationContext, ANDROID_CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(bigTextStyle)
+//            .setStyle(bigTextStyle)
             .setWhen(System.currentTimeMillis())
             .setSmallIcon(R.drawable.musicicon)
             .setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT)
-            .setLargeIcon(largeIconBitmap)
-            .addAction(playAction)
-            .addAction(prevAction)
+//            .setLargeIcon(largeIconBitmap)
+//            .addAction(playAction)
+//            .addAction(prevAction)
             .setDefaults(Notification.DEFAULT_LIGHTS)
             .setDefaults(Notification.DEFAULT_SOUND)
             .setVibrate(longArrayOf(-1))
             .setSound(null)
-            .setFullScreenIntent(pendingIntent,true)
+//            .setFullScreenIntent(pendingIntent,true)
             .setSmallIcon(android.R.drawable.stat_notify_more)
             .setAutoCancel(true)
+            .setContent(contentView)
 
     }
 

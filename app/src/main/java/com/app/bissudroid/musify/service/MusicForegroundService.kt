@@ -4,10 +4,7 @@ import android.content.Intent
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.IBinder
-import com.app.bissudroid.musify.events.PlaySong
-import com.app.bissudroid.musify.events.PlaybackState
-import com.app.bissudroid.musify.events.RxBus
-import com.app.bissudroid.musify.events.SavePosition
+import com.app.bissudroid.musify.events.*
 import com.app.bissudroid.musify.utils.NotificationUtils
 import com.app.bissudroid.musify.utils.SharedPreferenceUtils
 import io.reactivex.disposables.Disposable
@@ -24,7 +21,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     override fun onCompletion(mp: MediaPlayer?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
+    lateinit var notificationUtils:NotificationUtils
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
@@ -49,7 +46,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         mp?.seekTo(SharedPreferenceUtils.getCurrentSeekPosition(applicationContext)!!)
         Timber.d("%d",mp?.currentPosition);
         mp?.start()
-        startForegroundService()
+//        startForegroundService()
     }
 
     lateinit var mediaPlayer: MediaPlayer
@@ -65,6 +62,8 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
     override fun onCreate() {
         super.onCreate()
         mediaPlayer = MediaPlayer()
+
+        notificationUtils = NotificationUtils(baseContext)
         startForegroundService()
 
 
@@ -76,6 +75,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 //        val action = intent.getAction()
         RxBus.listen(PlaySong::class.java).subscribe{
             playSong()
+            startForegroundService()
         }
         RxBus.listen(SavePosition::class.java).subscribe{
             Timber.d("Position %d",mediaPlayer.currentPosition)
@@ -86,6 +86,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         RxBus.listen(PlaybackState::class.java).subscribe {
 //            adapter.addPerson(person = it.)/
             Timber.d("%s",it.playing)
+            startForegroundService()
 
             if(it.playing){
                 resumeSong()
@@ -95,6 +96,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
             }
 
         }
+
 
 
 //        when (action) {
@@ -122,10 +124,9 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 
     /* Used to build and start foreground service. */
     private fun startForegroundService() {
-        val notificationUtils = NotificationUtils(baseContext)
-        val builder = notificationUtils.getAndroidChannelNotification("Now Playing", songName)
-        val notification = builder.build()
 
+        val builder = notificationUtils.getAndroidChannelNotification("Now Playing")
+        val notification = builder.build()
         startForeground(1, notification)
     }
 
@@ -136,7 +137,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 
         Timber.d("%d",SharedPreferenceUtils.getCurrentSeekPosition(applicationContext!!))
 
-        if (!mediaPlayer.isPlaying) {
+        if (!mediaPlayer.isPlaying && !songName.isEmpty()) {
 
             mediaPlayer.setDataSource(songName)
             mediaPlayer.setOnPreparedListener(this)
@@ -153,7 +154,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
             mediaPlayer.setDataSource(songName)
 //
 //            mediaPlayer.setOnPreparedListener(this)
-//            mediaPlayer.prepareAsync()
+//            mediaPlayer.prepareAsync()notification_layout
 
 
         }
@@ -165,6 +166,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
         SharedPreferenceUtils.setCurrentSeekPosition(applicationContext,mediaPlayer.currentPosition)
         Timber.d("%d",mediaPlayer.currentPosition);
         mediaPlayer.pause()
+
 
     }
 

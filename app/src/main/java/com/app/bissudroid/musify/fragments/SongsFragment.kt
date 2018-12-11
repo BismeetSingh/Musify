@@ -93,6 +93,19 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         currentSong.controlCurrentSong.setOnClickListener(this@SongsFragment)
+        RxBus.listen(PlaybackState::class.java).subscribe{
+            if(it.playing){
+
+                currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
+            }else{
+
+                currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.play_music))
+            }
+        }
+        RxBus.listen(FragmentNotifierPlayBack::class.java).subscribe{
+            val holder=musicList.findViewHolderForAdapterPosition(songAdapter.mSelectedItemPosition)
+            RxBus.publish(AdapterState(holder as SongAdapter.SongHolder?,it.playing))
+        }
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -112,6 +125,7 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
 //TODO fix crash here on data source
             getPermissions()
         }
+
         musicList.adapter=songAdapter
         currentSong.songName.text=SharedPreferenceUtils.getCurrentSong(context!!)
 
@@ -121,7 +135,8 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
             SharedPreferenceUtils.getCurrentAlbumId(context!!)?.toLong()!!)
                     Glide.with(context!!).load(uri).apply(RequestOptions().centerCrop().placeholder(R.drawable.musicicon))
                 .into(currentSong.songThumbnail)
-        songAdapter.subscribeStates()
+//        songAdapter.subscribeStates()
+
 
     }
 
