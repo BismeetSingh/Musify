@@ -79,12 +79,14 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             // Sets whether notification posted to this channel should vibrate.
             androidChannel.enableVibration(false)
 
+
             // Sets the notification light color for notifications posted to this channel
             androidChannel.lightColor = Color.WHITE
             androidChannel.setSound(null, null)
 
             // Sets whether notifications posted to this channel appear on the lockscreen or not
             androidChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+
 
 
             manager.createNotificationChannel(androidChannel)
@@ -138,12 +140,6 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             }
 
 
-
-
-
-
-//        contentView.setOnClickPendingIntent(R.id.pauseNotificationSong, pendingPlayIntent)
-
         return NotificationCompat.Builder(applicationContext, ANDROID_CHANNEL_ID)
             .setStyle(MediaStyle().setShowCancelButton(true).setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext,1)
             ).setShowActionsInCompactView(0,1,2))
@@ -164,7 +160,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             .setDefaults(Notification.DEFAULT_LIGHTS)
             .setDefaults(Notification.DEFAULT_SOUND)
             .setVibrate(longArrayOf(-1))
-            .setSound(null)
+//            .setSound(null)
 //            .setFullScreenIntent(pendingIntent,true)
 
 
