@@ -15,16 +15,10 @@ import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.DrawableCompat
-import android.widget.RemoteViews
+import android.support.v4.media.app.NotificationCompat.MediaStyle
+import android.support.v4.media.session.MediaButtonReceiver
 import com.app.bissudroid.musify.R
 import com.app.bissudroid.musify.SongReceiver
-import android.support.v4.media.app.NotificationCompat.MediaStyle;
-import android.support.v4.media.session.MediaButtonReceiver
-import com.app.bissudroid.musify.R.id.currentSong
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
-import kotlinx.android.synthetic.main.bottom_now_playing_view.view.*
-import kotlinx.android.synthetic.main.fragment_main.*
 import java.io.FileNotFoundException
 
 
@@ -59,7 +53,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
     init {
         createChannels()
     }
-    public fun unregisterReceiver(){
+     fun unregisterReceiver(){
         unregisterReceiver(songReceiver)
     }
 
@@ -70,7 +64,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             androidChannel = NotificationChannel(
                 ANDROID_CHANNEL_ID,
-                ANDROID_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
+                ANDROID_CHANNEL_NAME, NotificationManager.IMPORTANCE_MIN
             )
 
 
@@ -115,7 +109,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             action = NotificationCompat.Action(R.drawable.pause_music,"Pause",null)
 
         }
-        val pendingPlayIntent = PendingIntent.getBroadcast(this, 1, playIntent, 0)
+        val pendingPlayIntent = PendingIntent.getBroadcast(this, 0, playIntent, 0)
         action.actionIntent=pendingPlayIntent;
 
 
@@ -150,7 +144,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
             .setContentTitle(SharedPreferenceUtils.getCurrentSong(applicationContext))
             .setContentText(SharedPreferenceUtils.getCurrentSongArtist(applicationContext))
             .setLargeIcon(iconBitmap)
-            .setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT)
+            .setPriority(NotificationManagerCompat.IMPORTANCE_MIN)
 
             .addAction(R.drawable.previoussong,"Previous", null)
             .addAction(action)
@@ -158,7 +152,7 @@ class NotificationUtils(base: Context) : ContextWrapper(base) {
 //            .setLargeIcon(largeIconBitmap)
 
             .setDefaults(Notification.DEFAULT_LIGHTS)
-            .setDefaults(Notification.DEFAULT_SOUND)
+
             .setVibrate(longArrayOf(-1))
 //            .setSound(null)
 //            .setFullScreenIntent(pendingIntent,true)

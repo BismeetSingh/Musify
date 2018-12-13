@@ -24,7 +24,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <service android:name=".service.MusicForegroundService"/>
+        <service android:name=".service.MusicForegroundService" android:enabled="true"/>
+        <receiver android:name=".SongReceiver">
+            <intent-filter>
+                <action android:name="ACTION_PLAY"/>
+                <action android:name="ACTION_PAUSE"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

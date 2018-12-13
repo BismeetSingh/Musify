@@ -118,7 +118,7 @@ class MusicForegroundService : Service(), MediaPlayer.OnPreparedListener,
 //            }
 
 //        }
-        return super.onStartCommand(intent, flags, startId)
+        return START_STICKY
     }
 
     /* Used to build and start foreground service. */

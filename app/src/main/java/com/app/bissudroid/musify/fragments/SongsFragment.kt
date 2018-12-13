@@ -94,17 +94,32 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         super.onViewCreated(view, savedInstanceState)
         currentSong.controlCurrentSong.setOnClickListener(this@SongsFragment)
         RxBus.listen(PlaybackState::class.java).subscribe{
-            if(it.playing){
+            if(currentSong!=null) {
+                if (it.playing) {
 
-                currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.pause_music))
-            }else{
+                    currentSong.controlCurrentSong.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context!!,
+                            R.drawable.pause_music
+                        )
+                    )
+                } else {
 
-                currentSong.controlCurrentSong.setImageDrawable(ContextCompat.getDrawable(context!!,R.drawable.play_music))
+                    currentSong.controlCurrentSong.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context!!,
+                            R.drawable.play_music
+                        )
+                    )
+                }
             }
+
         }
-        RxBus.listen(FragmentNotifierPlayBack::class.java).subscribe{
-            val holder=musicList.findViewHolderForAdapterPosition(songAdapter.mSelectedItemPosition)
-            RxBus.publish(AdapterState(holder as SongAdapter.SongHolder?,it.playing))
+        RxBus.listen(FragmentNotifierPlayBack::class.java).subscribe {
+            if (musicList != null) {
+                val holder = musicList.findViewHolderForAdapterPosition(songAdapter.mSelectedItemPosition)
+                RxBus.publish(AdapterState(holder as SongAdapter.SongHolder?, it.playing))
+            }
         }
     }
 
@@ -115,11 +130,14 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
         val view=LayoutInflater.from(context).inflate(R.layout.empty_view,root,false);
         musicList.setEmptyView(view)
         currentSong.songName.isSelected=true
-        val intent = Intent(activity, MusicForegroundService::class.java)
-        activity!!.startService(intent)
+
         songAdapter=SongAdapter(context!!,this)
         if(Build.VERSION.SDK_INT<23){
             songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
+            if(songAdapter.itemCount>0) {
+                val intent = Intent(activity, MusicForegroundService::class.java)
+                activity!!.startService(intent)
+            }
         }
         else{
 //TODO fix crash here on data source
@@ -151,6 +169,11 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
             )
         } else {
             songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
+            if(songAdapter.itemCount>0) {
+                val intent = Intent(activity, MusicForegroundService::class.java)
+                activity!!.startService(intent)
+            }
+
         }
 
     }
@@ -164,6 +187,11 @@ class SongsFragment : Fragment(),onSongClickListener,View.OnClickListener{
                 && permissions[1].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1]==PackageManager.PERMISSION_GRANTED) {
                 songAdapter.updateList(SongsManager.getAllAudioFromDevice(context!!))
+                if(songAdapter.itemCount>0) {
+                    val intent = Intent(activity, MusicForegroundService::class.java)
+                    activity!!.startService(intent)
+                }
+
 
 
 
